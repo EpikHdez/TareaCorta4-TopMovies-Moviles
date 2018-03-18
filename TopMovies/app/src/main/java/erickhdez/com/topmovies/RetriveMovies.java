@@ -1,35 +1,41 @@
 package erickhdez.com.topmovies;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by erickhdez on 18/3/18.
  */
 
-public class RetriveMovies extends AsyncTask<String, Void, JSONArray> {
-    @Override
-    protected JSONArray doInBackground(String... strings) {
-        if(android.os.Debug.isDebuggerConnected())
-            android.os.Debug.waitForDebugger();
+public class RetriveMovies extends AsyncTask<String, Void, ArrayList<Movie>> {
+    private IReceiveAsyncTaskResponse taskRequester;
 
-        String url = strings[0];
+    public RetriveMovies(IReceiveAsyncTaskResponse taskRequester) {
+        this.taskRequester = taskRequester;
+    }
+
+    @Override
+    protected ArrayList<Movie> doInBackground(String... strings) {
+        String pageURL = strings[0];
         int wantedElements = Integer.parseInt(strings[1]);
 
         try {
-            Document html = Jsoup.connect(url).get();
+            Document html = Jsoup.connect(pageURL).get();
             Elements top100Movies = html.select("div.lister-item");
             List<Element> top20Movies = top100Movies.subList(0, wantedElements);
-            JSONArray parsedMovies = new JSONArray();
+            ArrayList<Movie> parsedMovies = new ArrayList<>();
 
             for(Element movie : top20Movies) {
                 Element image = movie.selectFirst("img");
@@ -38,19 +44,18 @@ public class RetriveMovies extends AsyncTask<String, Void, JSONArray> {
                 Element header = movie.selectFirst("h3");
                 String movieName = header.selectFirst("a[href]").html();
                 String releaseYear = header.selectFirst("span.lister-item-year").html();
+                String movieFullName = String.format("%s - %s", movieName, releaseYear);
 
                 Element ratings = movie.selectFirst("div.ratings-bar");
                 String imdbRating = ratings.selectFirst("strong").html();
                 String metascore = ratings.selectFirst("span.metascore").html();
 
-                JSONObject movieInfo = new JSONObject();
-                movieInfo.put("name", movieName);
-                movieInfo.put("year", releaseYear);
-                movieInfo.put("star_rating", imdbRating);
-                movieInfo.put("metascore", metascore);
-                movieInfo.put("image", imageUrl);
+                URL url = new URL(imageUrl);
+                URLConnection connection = url.openConnection();
+                Bitmap movieImage = BitmapFactory.decodeStream(connection.getInputStream());
 
-                parsedMovies.put(movieInfo);
+                Movie movieInfo = new Movie(movieName, movieImage, imdbRating, metascore);
+                parsedMovies.add(movieInfo);
             }
 
             return parsedMovies;
@@ -59,5 +64,11 @@ public class RetriveMovies extends AsyncTask<String, Void, JSONArray> {
 
             return null;
         }
+    }
+
+    @Override
+    protected void onPostExecute(ArrayList<Movie> movies) {
+        super.onPostExecute(movies);
+        taskRequester.receiveResponse(movies);
     }
 }

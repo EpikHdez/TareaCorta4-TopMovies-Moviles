@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Top Movies</string>
+    <string name="app_name">Top 20 Movies 2017</string>
+    <string name="loading">Cargando...</string>
 </resources>
