@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Top 20 Movies 2017</string>
-    <string name="loading">Cargando...</string>
+    <string name="loading_1">Cargando.</string>
+    <string name="loading_2">Cargando. .</string>
+    <string name="loading_3">Cargando. . .</string>
+    <string name="no_connection">No se ha podido establecer conexión, ¿Se encuentra conectado a internet?.</string>
 </resources>
